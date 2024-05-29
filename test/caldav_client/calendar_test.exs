@@ -73,4 +73,20 @@ defmodule CalDAVClient.CalendarTest do
       assert :ok = @client |> CalDAVClient.Calendar.delete(@calendar_url)
     end
   end
+
+  describe "lists calendars" do
+    test "creates a calendar" do
+      assert :ok =
+               @client
+               |> CalDAVClient.Calendar.create(@calendar_url,
+                 name: "Name",
+                 description: "Description"
+               )
+    end
+
+    test "returns list of calendars" do
+      @client
+      |> CalDAVClient.Calendar.list()
+    end
+  end
 end

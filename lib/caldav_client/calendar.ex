@@ -26,15 +26,76 @@ defmodule CalDAVClient.Calendar do
   @spec list(CalDAVClient.Client.t()) ::
           {:ok, [t()]} | {:error, any()}
   def list(caldav_client) do
+    with {:ok, user_principal_url} <- get_user_principal(caldav_client),
+         {:ok, calendar_home_set} <- get_calendar_home_set(caldav_client, user_principal_url) do
+      url =
+        caldav_client.server_url
+        |> URI.parse()
+        |> Map.put(:path, calendar_home_set)
+        |> URI.to_string()
+
+      case caldav_client
+           |> make_tesla_client(@xml_middlewares)
+           |> Tesla.request(
+             method: :propfind,
+             url: url,
+             headers: [
+               {"Depth", "1"},
+               {"Prefer", "return-minimal"}
+             ],
+             body: CalDAVClient.XML.Builder.build_list_calendar_xml()
+           ) do
+        {:ok, %Tesla.Env{status: 207, body: response_xml}} ->
+          calendars = response_xml |> CalDAVClient.XML.Parser.parse_calendars()
+          {:ok, calendars}
+
+        {:ok, %Tesla.Env{status: code}} ->
+          {:error, reason_atom(code)}
+
+        {:error, _reason} = error ->
+          error
+      end
+    end
+  end
+
+  defp get_user_principal(caldav_client) do
     case caldav_client
          |> make_tesla_client(@xml_middlewares)
          |> Tesla.request(
            method: :propfind,
            url: "",
-           body: CalDAVClient.XML.Builder.build_list_calendar_xml()
+           headers: [],
+           body: CalDAVClient.XML.Builder.build_get_user_principal_xml()
          ) do
       {:ok, %Tesla.Env{status: 207, body: response_xml}} ->
-        calendars = response_xml |> CalDAVClient.XML.Parser.parse_calendars()
+        calendars = response_xml |> CalDAVClient.XML.Parser.parse_user_principal()
+        {:ok, calendars}
+
+      {:ok, %Tesla.Env{status: code}} ->
+        {:error, reason_atom(code)}
+
+      {:error, _reason} = error ->
+        error
+    end
+  end
+
+  defp get_calendar_home_set(%CalDAVClient.Client{} = caldav_client, user_principal_url) do
+    base_path = URI.parse(caldav_client.server_url).path
+    ^base_path <> user_principal_url = user_principal_url
+
+    case caldav_client
+         |> make_tesla_client(@xml_middlewares)
+         |> Tesla.request(
+           method: :propfind,
+           url: user_principal_url,
+           headers: [
+             {"Depth", "0"},
+             {"Prefer", "return-minimal"}
+           ],
+           body: CalDAVClient.XML.Builder.build_calendar_home_set_xml()
+         ) do
+      {:ok, %Tesla.Env{status: 207, body: response_xml}} ->
+        calendars = response_xml |> CalDAVClient.XML.Parser.parse_calendar_home_set()
         {:ok, calendars}
 
       {:ok, %Tesla.Env{status: code}} ->
