@@ -18,6 +18,8 @@ defmodule CalDAVClient.XML.Parser do
   @cal_name_xpath ~x"./*[local-name()='propstat']/*[local-name()='prop']/*[local-name()='displayname']/text()"s
   @cal_type_xpath ~x"./*[local-name()='propstat']/*[local-name()='prop']/*[local-name()='supported-calendar-component-set']/*[local-name()='comp']/@name"s
   @cal_timezone_xpath ~x"./*[local-name()='propstat']/*[local-name()='prop']/*[local-name()='calendar-timezone']/text()"s
+  @cal_color_path ~x"./*[local-name()='propstat']/*[local-name()='prop']/*[local-name()='calendar-color']/text()"s
+  @cal_description_path ~x"./*[local-name()='propstat']/*[local-name()='prop']/*[local-name()='calendar-description']/text()"s
 
   @doc """
   Parses XML response body into a list of events.
@@ -43,7 +45,9 @@ defmodule CalDAVClient.XML.Parser do
       url: @url_xpath,
       name: @cal_name_xpath,
       type: @cal_type_xpath,
-      timezone: @cal_timezone_xpath
+      timezone: @cal_timezone_xpath,
+      description: @cal_description_path,
+      color: @cal_color_path
     )
     |> Enum.map(&struct(CalDAVClient.Calendar, &1))
   end

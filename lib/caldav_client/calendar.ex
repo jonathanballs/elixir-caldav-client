@@ -10,9 +10,11 @@ defmodule CalDAVClient.Calendar do
           url: String.t(),
           name: String.t(),
           type: String.t(),
-          timezone: String.t()
+          timezone: String.t(),
+          color: String.t(),
+          description: String.t()
         }
-  @enforce_keys [:url, :name, :type, :timezone]
+  @enforce_keys [:url, :name, :type, :timezone, :color, :description]
   defstruct @enforce_keys
 
   @xml_middlewares [
@@ -28,17 +30,11 @@ defmodule CalDAVClient.Calendar do
   def list(caldav_client) do
     with {:ok, user_principal_url} <- get_user_principal(caldav_client),
          {:ok, calendar_home_set} <- get_calendar_home_set(caldav_client, user_principal_url) do
-      url =
-        caldav_client.server_url
-        |> URI.parse()
-        |> Map.put(:path, calendar_home_set)
-        |> URI.to_string()
-
       case caldav_client
            |> make_tesla_client(@xml_middlewares)
            |> Tesla.request(
              method: :propfind,
-             url: url,
+             url: calendar_home_set,
              headers: [
                {"Depth", "1"},
                {"Prefer", "return-minimal"}
@@ -80,9 +76,6 @@ defmodule CalDAVClient.Calendar do
   end
 
   defp get_calendar_home_set(%CalDAVClient.Client{} = caldav_client, user_principal_url) do
-    base_path = URI.parse(caldav_client.server_url).path
-    ^base_path <> user_principal_url = user_principal_url
-
     case caldav_client
          |> make_tesla_client(@xml_middlewares)
          |> Tesla.request(

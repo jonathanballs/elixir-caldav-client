@@ -10,8 +10,14 @@ defmodule CalDAVClient.Tesla do
   @spec make_tesla_client(CalDAVClient.Client.t(), [Tesla.Client.middleware()]) ::
           Tesla.Client.t()
   def make_tesla_client(%{server_url: server_url, auth: auth}, middleware \\ []) do
+    base_url =
+      server_url
+      |> URI.parse()
+      |> Map.put(:path, "/")
+      |> URI.to_string()
+
     Tesla.client([
-      {Tesla.Middleware.BaseUrl, server_url},
+      {Tesla.Middleware.BaseUrl, base_url},
       {auth_middleware(auth), credentials(auth)}
       | middleware
     ])

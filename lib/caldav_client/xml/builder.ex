@@ -39,22 +39,19 @@ defmodule CalDAVClient.XML.Builder do
   """
   @spec build_list_calendar_xml() :: String.t()
   def build_list_calendar_xml() do
-    {"D:propfind",
-     [
-       "xmlns:D": "DAV:",
-       "xmlns:CS": "http://calendarserver.org/ns/",
-       "xmlns:C": "urn:ietf:params:xml:ns:caldav"
-     ],
-     [
-       {"D:prop", nil,
-        [
-          {"D:resourcetype"},
-          {"D:displayname"},
-          {"C:calendar-timezone"},
-          {"C:supported-calendar-component-set"}
-        ]}
-     ]}
-    |> serialize()
+    """
+    <d:propfind xmlns:d="DAV:" xmlns:cs="http://calendarserver.org/ns/" xmlns:c="urn:ietf:params:xml:ns:caldav" xmlns:a="http://apple.com/ns/ical/">
+      <d:prop>
+         <d:resourcetype />
+         <d:displayname />
+         <cs:getctag />
+         <c:supported-calendar-component-set />
+         <c:calendar-timezone />
+         <c:calendar-description />
+         <a:calendar-color  />
+      </d:prop>
+    </d:propfind>
+    """
   end
 
   @doc """
