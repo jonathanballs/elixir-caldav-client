@@ -3,9 +3,9 @@ defmodule CalDAVClient.CalendarTest do
 
   @moduletag :integration
 
-  @server_url Application.get_env(:caldav_client, :test_server)[:server_url]
-  @username Application.get_env(:caldav_client, :test_server)[:username]
-  @password Application.get_env(:caldav_client, :test_server)[:password]
+  @server_url Application.compile_env(:caldav_client, :test_server)[:server_url]
+  @username Application.compile_env(:caldav_client, :test_server)[:username]
+  @password Application.compile_env(:caldav_client, :test_server)[:password]
 
   @client %CalDAVClient.Client{
     server_url: @server_url,
