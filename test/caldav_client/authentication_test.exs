@@ -22,8 +22,8 @@ defmodule CalDAVClient.AuthenticationTest do
     }
   }
 
-  @calendar_url CalDAVClient.URL.Builder.build_calendar_url(@username, "calendar")
-  @event_url CalDAVClient.URL.Builder.build_event_url(@calendar_url, "event")
+  @calendar_url CalDAVClient.URL.build_calendar_url(@client, "calendar")
+  @event_url CalDAVClient.URL.build_event_url(@client, "calendar", "event")
 
   @event_icalendar """
   BEGIN:VCALENDAR

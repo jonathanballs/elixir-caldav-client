@@ -3,13 +3,12 @@
 [![Hex.pm](https://img.shields.io/hexpm/v/caldav_client.svg)](https://hex.pm/packages/caldav_client)
 [![API Docs](https://img.shields.io/badge/api-docs-brightgreen.svg)](https://hexdocs.pm/caldav_client/readme.html)
 
-
 This library allows for managing calendars and events on a remote calendar server according to CalDAV specification ([RFC 4791](https://tools.ietf.org/html/rfc4791)). Supports time zones, recurrence expansion and ETags. Internally uses [Tesla](https://github.com/teamon/tesla) HTTP client.
 
 Please note that conversion between native Elixir structures and iCalendar format ([RFC 5545](https://tools.ietf.org/html/rfc5545)) is beyond the scope of this library. The following packages are recommended:
 
-* [ICalendar](https://github.com/lpil/icalendar)
-* [Calibex](https://github.com/kbrw/calibex)
+- [ICalendar](https://github.com/lpil/icalendar)
+- [Calibex](https://github.com/kbrw/calibex)
 
 ## Installation
 
@@ -88,7 +87,7 @@ The library supports Basic, Digest and Bearer authentication:
 Each calendar user (or principal, according to CalDAV terminology) can have multiple calendars, which are identified by URLs.
 
 ```elixir
-calendar_url = CalDAVClient.URL.Builder.build_calendar_url("username", "example")
+calendar_url = CalDAVClient.URL.build_calendar_url(client, "example")
 # "/calendars/username/example"
 
 :ok =
@@ -108,7 +107,7 @@ In case of any failure, `{:error, reason}` tuple will be returned.
 ### Event
 
 ```elixir
-event_url = CalDAVClient.URL.Builder.build_event_url(calendar_url, "event.ics")
+event_url = CalDAVClient.URL.build_event_url(client, calendar_id, "event.ics")
 # "/calendars/username/example/event.ics"
 
 event_icalendar = """
@@ -181,6 +180,7 @@ It is also possible to retrieve only the events with an alarm (`VALARM`) within 
 ```
 
 For custom event reports, pass the XML request body to `CalDAVClient.Event.get_events_by_xml/3` function:
+
 ```elixir
 {:ok, events} = client |> CalDAVClient.Event.get_events_by_xml(calendar_url, request_xml)
 ```

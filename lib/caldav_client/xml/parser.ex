@@ -55,26 +55,26 @@ defmodule CalDAVClient.XML.Parser do
   @doc """
   Parses XML response body into a list of calendars.
   """
-  @spec parse_user_principal(response_xml :: String.t()) :: [CalDAVClient.Calendar.t()]
+  @spec parse_user_principal(response_xml :: String.t()) ::
+          {:ok, String.t()} | {:error, :not_found}
   def parse_user_principal(response_xml) do
-    %{href: href} =
-      response_xml
-      |> xpath(@user_principal_xpath, href: @url_xpath)
-      |> hd()
-
-    href
+    case xpath(response_xml, @user_principal_xpath, href: @url_xpath) do
+      [%{href: href} | _] -> {:ok, href}
+      _ -> {:error, :not_found}
+    end
   end
 
   @doc """
   Parses XML response body into a list of calendars.
   """
-  @spec parse_calendar_home_set(response_xml :: String.t()) :: [CalDAVClient.Calendar.t()]
+  @spec(
+    parse_calendar_home_set(response_xml :: String.t()) :: {:ok, String.t()},
+    {:error, :not_found}
+  )
   def parse_calendar_home_set(response_xml) do
-    %{href: href} =
-      response_xml
-      |> xpath(@calendar_home_set_xpath, href: @url_xpath)
-      |> hd()
-
-    href
+    case xpath(response_xml, @calendar_home_set_xpath, href: @url_xpath) do
+      [%{href: href} | _] -> {:ok, href}
+      _ -> {:error, :not_found}
+    end
   end
 end

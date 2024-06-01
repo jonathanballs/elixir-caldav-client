@@ -1,5 +1,6 @@
 defmodule CaldavClient.ExampleTest do
   use ExUnit.Case
+  @moduletag :integration
 
   test "test group subject" do
     client = %CalDAVClient.Client{
@@ -11,11 +12,6 @@ defmodule CaldavClient.ExampleTest do
     }
 
     {:ok, calendars} = CalDAVClient.Calendar.list(client)
-
     dbg(calendars)
-
-    # Enum.each(calendars, fn calendar ->
-    #   CalDAVClient.
-    # end)
   end
 end

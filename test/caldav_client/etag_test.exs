@@ -16,10 +16,10 @@ defmodule CalDAVClient.ETagTest do
   }
 
   @calendar_id "etag_test"
-  @calendar_url CalDAVClient.URL.Builder.build_calendar_url(@username, @calendar_id)
+  @calendar_url CalDAVClient.URL.build_calendar_url(@client, @calendar_id)
 
   @event_id "event.ics"
-  @event_url CalDAVClient.URL.Builder.build_event_url(@calendar_url, @event_id)
+  @event_url CalDAVClient.URL.build_event_url(@client, @calendar_id, @event_id)
 
   @event_icalendar """
   BEGIN:VCALENDAR

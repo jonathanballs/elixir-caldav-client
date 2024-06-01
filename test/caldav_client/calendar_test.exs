@@ -16,7 +16,7 @@ defmodule CalDAVClient.CalendarTest do
   }
 
   @calendar_id "calendar_test"
-  @calendar_url CalDAVClient.URL.Builder.build_calendar_url(@username, @calendar_id)
+  @calendar_url CalDAVClient.URL.build_calendar_url(@client, @calendar_id)
 
   setup do
     on_exit(fn -> @client |> CalDAVClient.Calendar.delete(@calendar_url) end)

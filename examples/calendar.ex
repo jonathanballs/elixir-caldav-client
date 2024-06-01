@@ -6,7 +6,8 @@ client = %CalDAVClient.Client{
   }
 }
 
-calendar_url = CalDAVClient.URL.Builder.build_calendar_url("username", "calendar_demo")
+calendar_url = CalDAVClient.URL.build_calendar_url(client, "calendar")
+event_url = CalDAVClient.URL.build_event_url(client, "calendar", "event.ics")
 
 try do
   :ok =

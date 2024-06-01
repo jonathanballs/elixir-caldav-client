@@ -6,9 +6,8 @@ client = %CalDAVClient.Client{
   }
 }
 
-calendar_url = CalDAVClient.URL.Builder.build_calendar_url("username", "event_demo")
-
-event_url = CalDAVClient.URL.Builder.build_event_url(calendar_url, "event.ics")
+calendar_url = CalDAVClient.URL.build_calendar_url(client, "calendar")
+event_url = CalDAVClient.URL.build_event_url(client, "calendar", "event.ics")
 
 event_uid = "uid1@example.com"
 

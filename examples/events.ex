@@ -6,7 +6,7 @@ client = %CalDAVClient.Client{
   }
 }
 
-calendar_url = CalDAVClient.URL.Builder.build_calendar_url("username", "default")
+calendar_url = CalDAVClient.URL.build_calendar_url(client, "calendar")
 
 from = DateTime.from_naive!(~N[2021-02-01 00:00:00], "Europe/Warsaw")
 to = DateTime.from_naive!(~N[2021-03-01 00:00:00], "Europe/Warsaw")
