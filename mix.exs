@@ -40,7 +40,8 @@ defmodule CalDAVClient.MixProject do
       {:tzdata, "~> 1.1", optional: true},
       {:hackney, "~> 1.18", optional: true},
       {:ex_parameterized, "~> 1.3", only: :test},
-      {:ex_doc, "~> 0.28.2", only: :dev, runtime: false}
+      {:ex_doc, "~> 0.28.2", only: :dev, runtime: false},
+      {:mix_test_watch, "~> 1.0", only: [:dev, :test], runtime: false}
     ]
   end
 

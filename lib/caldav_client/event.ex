@@ -5,6 +5,7 @@ defmodule CalDAVClient.Event do
 
   import CalDAVClient.HTTP.Error
   import CalDAVClient.Tesla
+  alias CalDAVClient.URL
 
   @type t :: %__MODULE__{
           icalendar: String.t(),
@@ -18,30 +19,37 @@ defmodule CalDAVClient.Event do
   @doc """
   Creates an event (see [RFC 4791, section 5.3.2](https://tools.ietf.org/html/rfc4791#section-5.3.2)).
   """
-  @spec create(CalDAVClient.Client.t(), event_url :: String.t(), event_icalendar :: String.t()) ::
+  @spec create(
+          CalDAVClient.Client.t(),
+          calendar_id :: String.t(),
+          event_id :: String.t(),
+          event_icalendar :: String.t()
+        ) ::
           {:ok, etag :: String.t() | nil} | {:error, any()}
-  def create(caldav_client, event_url, event_icalendar) do
+  def create(client, calendar_id, event_id, event_icalendar) do
     # fail when event already exists
     headers = [{"If-None-Match", "*"}]
 
-    case caldav_client
-         |> make_tesla_client([
-           CalDAVClient.Tesla.ContentTypeICalendarMiddleware,
-           CalDAVClient.Tesla.ContentLengthMiddleware
-         ])
-         |> Tesla.put(event_url, event_icalendar, headers: headers) do
-      {:ok, %Tesla.Env{status: code} = env} when code in [201, 204] ->
-        etag = env |> Tesla.get_header("etag")
-        {:ok, etag}
+    with {:ok, event_url} <- URL.build_event_url(client, calendar_id, event_id) do
+      case client
+           |> make_tesla_client([
+             CalDAVClient.Tesla.ContentTypeICalendarMiddleware,
+             CalDAVClient.Tesla.ContentLengthMiddleware
+           ])
+           |> Tesla.put(event_url, event_icalendar, headers: headers) do
+        {:ok, %Tesla.Env{status: code} = env} when code in [201, 204] ->
+          etag = env |> Tesla.get_header("etag")
+          {:ok, etag}
 
-      {:ok, %Tesla.Env{status: code}} ->
-        case code do
-          412 -> {:error, :already_exists}
-          _ -> {:error, reason_atom(code)}
-        end
+        {:ok, %Tesla.Env{status: code}} ->
+          case code do
+            412 -> {:error, :already_exists}
+            _ -> {:error, reason_atom(code)}
+          end
 
-      {:error, _reason} = error ->
-        error
+        {:error, _reason} = error ->
+          error
+      end
     end
   end
 
@@ -53,30 +61,33 @@ defmodule CalDAVClient.Event do
   """
   @spec update(
           CalDAVClient.Client.t(),
-          event_url :: String.t(),
+          calendar_id :: String.t(),
+          event_id :: String.t(),
           event_icalendar :: String.t(),
           opts :: keyword()
         ) :: {:ok, etag :: String.t() | nil} | {:error, any()}
-  def update(caldav_client, event_url, event_icalendar, opts \\ []) do
-    case caldav_client
-         |> make_tesla_client([
-           CalDAVClient.Tesla.ContentTypeICalendarMiddleware,
-           CalDAVClient.Tesla.ContentLengthMiddleware,
-           {CalDAVClient.Tesla.IfMatchMiddleware, etag: opts[:etag]}
-         ])
-         |> Tesla.put(event_url, event_icalendar) do
-      {:ok, %Tesla.Env{status: code} = env} when code in [201, 204] ->
-        etag = env |> Tesla.get_header("etag")
-        {:ok, etag}
+  def update(client, calendar_id, event_id, event_icalendar, opts \\ []) do
+    with {:ok, event_url} <- URL.build_event_url(client, calendar_id, event_id) do
+      case client
+           |> make_tesla_client([
+             CalDAVClient.Tesla.ContentTypeICalendarMiddleware,
+             CalDAVClient.Tesla.ContentLengthMiddleware,
+             {CalDAVClient.Tesla.IfMatchMiddleware, etag: opts[:etag]}
+           ])
+           |> Tesla.put(event_url, event_icalendar) do
+        {:ok, %Tesla.Env{status: code} = env} when code in [201, 204] ->
+          etag = env |> Tesla.get_header("etag")
+          {:ok, etag}
 
-      {:ok, %Tesla.Env{status: code}} ->
-        case code do
-          412 -> {:error, :bad_etag}
-          _ -> {:error, reason_atom(code)}
-        end
+        {:ok, %Tesla.Env{status: code}} ->
+          case code do
+            412 -> {:error, :bad_etag}
+            _ -> {:error, reason_atom(code)}
+          end
 
-      {:error, _reason} = error ->
-        error
+        {:error, _reason} = error ->
+          error
+      end
     end
   end
 
@@ -86,46 +97,54 @@ defmodule CalDAVClient.Event do
   ## Options
   * `etag` - a specific ETag used to ensure that the client overwrites the latest version of the event.
   """
-  @spec delete(CalDAVClient.Client.t(), event_url :: String.t(), opts :: keyword()) ::
-          :ok | {:error, any()}
-  def delete(caldav_client, event_url, opts \\ []) do
-    case caldav_client
-         |> make_tesla_client([
-           CalDAVClient.Tesla.ContentTypeICalendarMiddleware,
-           CalDAVClient.Tesla.ContentLengthMiddleware,
-           {CalDAVClient.Tesla.IfMatchMiddleware, etag: opts[:etag]}
-         ])
-         |> Tesla.delete(event_url) do
-      {:ok, %Tesla.Env{status: code}} ->
-        case code do
-          204 -> :ok
-          412 -> {:error, :bad_etag}
-          _ -> {:error, reason_atom(code)}
-        end
+  @spec delete(
+          CalDAVClient.Client.t(),
+          calendar_id :: String.t(),
+          event_id :: String.t(),
+          opts :: keyword()
+        ) :: :ok | {:error, any()}
+  def delete(client, calendar_id, event_id, opts \\ []) do
+    with {:ok, event_url} <- URL.build_event_url(client, calendar_id, event_id) do
+      case client
+           |> make_tesla_client([
+             CalDAVClient.Tesla.ContentTypeICalendarMiddleware,
+             CalDAVClient.Tesla.ContentLengthMiddleware,
+             {CalDAVClient.Tesla.IfMatchMiddleware, etag: opts[:etag]}
+           ])
+           |> Tesla.delete(event_url) do
+        {:ok, %Tesla.Env{status: code}} ->
+          case code do
+            204 -> :ok
+            412 -> {:error, :bad_etag}
+            _ -> {:error, reason_atom(code)}
+          end
 
-      {:error, _reason} = error ->
-        error
+        {:error, _reason} = error ->
+          error
+      end
     end
   end
 
   @doc """
   Returns a specific event in the iCalendar format along with its ETag.
   """
-  @spec get(CalDAVClient.Client.t(), event_url :: String.t()) ::
+  @spec get(CalDAVClient.Client.t(), String.t(), String.t()) ::
           {:ok, icalendar :: String.t(), etag :: String.t()} | {:error, any()}
-  def get(caldav_client, event_url) do
-    case caldav_client
-         |> make_tesla_client()
-         |> Tesla.get(event_url) do
-      {:ok, %Tesla.Env{status: 200, body: icalendar} = env} ->
-        etag = env |> Tesla.get_header("etag")
-        {:ok, icalendar, etag}
+  def get(client, calendar_id, event_id) do
+    with {:ok, event_url} <- URL.build_event_url(client, calendar_id, event_id) do
+      case client
+           |> make_tesla_client()
+           |> Tesla.get(event_url) do
+        {:ok, %Tesla.Env{status: 200, body: icalendar} = env} ->
+          etag = env |> Tesla.get_header("etag")
+          {:ok, icalendar, etag}
 
-      {:ok, %Tesla.Env{status: code}} ->
-        {:error, reason_atom(code)}
+        {:ok, %Tesla.Env{status: code}} ->
+          {:error, reason_atom(code)}
 
-      {:error, _reason} = error ->
-        error
+        {:error, _reason} = error ->
+          error
+      end
     end
   end
 
@@ -133,16 +152,18 @@ defmodule CalDAVClient.Event do
   Returns an event with the specified UID property
   (see [RFC 4791, section 7.8.6](https://tools.ietf.org/html/rfc4791#section-7.8.6)).
   """
-  @spec find_by_uid(CalDAVClient.Client.t(), calendar_url :: String.t(), event_uid :: String.t()) ::
+  @spec find_by_uid(CalDAVClient.Client.t(), String.t(), String.t()) ::
           {:ok, t()} | {:error, any()}
-  def find_by_uid(caldav_client, calendar_url, event_uid) do
-    request_xml = CalDAVClient.XML.Builder.build_retrieval_of_event_by_uid_xml(event_uid)
+  def find_by_uid(client, calendar_id, event_uid) do
+    with {:ok, calendar_url} <- URL.build_calendar_url(client, calendar_id) do
+      request_xml = CalDAVClient.XML.Builder.build_retrieval_of_event_by_uid_xml(event_uid)
 
-    case caldav_client |> get_events_by_xml(calendar_url, request_xml) do
-      {:ok, [event]} -> {:ok, event}
-      {:ok, []} -> {:error, :not_found}
-      {:ok, _events} -> {:error, :multiple_found}
-      {:error, _reason} = error -> error
+      case client |> get_events_by_xml(calendar_url, request_xml) do
+        {:ok, [event]} -> {:ok, event}
+        {:ok, []} -> {:error, :not_found}
+        {:ok, _events} -> {:error, :multiple_found}
+        {:error, _reason} = error -> error
+      end
     end
   end
 
@@ -155,41 +176,23 @@ defmodule CalDAVClient.Event do
   """
   @spec get_events(
           CalDAVClient.Client.t(),
-          calendar_url :: String.t(),
+          calendar_id :: String.t(),
           from :: DateTime.t(),
           to :: DateTime.t(),
           opts :: keyword()
         ) :: {:ok, [t()]} | {:error, any()}
-  def get_events(caldav_client, calendar_url, from, to, opts \\ []) do
-    request_xml = CalDAVClient.XML.Builder.build_retrieval_of_events_xml(from, to, opts)
-    caldav_client |> get_events_by_xml(calendar_url, request_xml)
+  def get_events(client, calendar_id, from, to, opts \\ []) do
+    with {:ok, calendar_url} <- URL.build_calendar_url(client, calendar_id) do
+      request_xml = CalDAVClient.XML.Builder.build_retrieval_of_events_xml(from, to, opts)
+      client |> get_events_by_xml(calendar_url, request_xml)
+    end
   end
 
   @doc """
   Retrieves all events or its occurrences having an VALARM within a specific time range
   (see [RFC 4791, section 7.8.5](https://tools.ietf.org/html/rfc4791#section-7.8.5)).
 
-  ## Options
-  * `expand` - if `true`, recurring events will be expanded to occurrences, defaults to `false`.
-  * `event_from` - start of time range for events or occurrences, defaults to `0000-00-00T00:00:00Z`.
-  * `event_to` - end of time range for events or occurrences, defaults to `9999-12-31T23:59:59Z`.
-  """
-  @spec get_events_by_alarm(
-          CalDAVClient.Client.t(),
-          calendar_url :: String.t(),
-          from :: DateTime.t(),
-          to :: DateTime.t(),
-          opts :: keyword()
-        ) ::
-          {:ok, [t()]} | {:error, any()}
-  def get_events_by_alarm(caldav_client, calendar_url, from, to, opts \\ []) do
-    request_xml =
-      CalDAVClient.XML.Builder.build_retrieval_of_events_having_alarm_xml(from, to, opts)
-
-    caldav_client |> get_events_by_xml(calendar_url, request_xml)
-  end
-
-  @doc """
+  @doc \"""
   Retrieves all occurrences of events for given XML request body.
   """
   @spec get_events_by_xml(
@@ -198,8 +201,8 @@ defmodule CalDAVClient.Event do
           request_xml :: String.t()
         ) ::
           {:ok, [t()]} | {:error, any()}
-  def get_events_by_xml(caldav_client, calendar_url, request_xml) do
-    case caldav_client
+  def get_events_by_xml(client, calendar_url, request_xml) do
+    case client
          |> make_tesla_client([
            CalDAVClient.Tesla.ContentTypeXMLMiddleware,
            CalDAVClient.Tesla.ContentLengthMiddleware

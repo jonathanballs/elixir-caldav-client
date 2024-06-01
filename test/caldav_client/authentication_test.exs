@@ -7,6 +7,9 @@ defmodule CalDAVClient.AuthenticationTest do
   @username Application.compile_env(:caldav_client, :test_server)[:username]
   @password Application.compile_env(:caldav_client, :test_server)[:password]
 
+  @calendar_id "calendar_id"
+  @event_id "event_id"
+
   @client %CalDAVClient.Client{
     server_url: @server_url,
     auth: %CalDAVClient.Auth.Basic{
@@ -22,9 +25,6 @@ defmodule CalDAVClient.AuthenticationTest do
     }
   }
 
-  @calendar_url CalDAVClient.URL.build_calendar_url(@client, "calendar")
-  @event_url CalDAVClient.URL.build_event_url(@client, "calendar", "event")
-
   @event_icalendar """
   BEGIN:VCALENDAR
   PRODID:-//Elixir//CalDAV//EN
@@ -38,17 +38,18 @@ defmodule CalDAVClient.AuthenticationTest do
   """
 
   setup do
-    :ok = @client |> CalDAVClient.Calendar.create(@calendar_url)
-    {:ok, _etag} = @client |> CalDAVClient.Event.create(@event_url, @event_icalendar)
-    on_exit(fn -> @client |> CalDAVClient.Calendar.delete(@calendar_url) end)
+    :ok = @client |> CalDAVClient.Calendar.create(@calendar_id)
+    {:ok, _etag} = @client |> CalDAVClient.Event.create(@calendar_id, @event_id, @event_icalendar)
+    on_exit(fn -> @client |> CalDAVClient.Calendar.delete(@calendar_id) end)
     :ok
   end
 
   test "passes on valid credentials" do
-    assert {:ok, _icalendar, _etag} = @client |> CalDAVClient.Event.get(@event_url)
+    assert {:ok, _icalendar, _etag} = @client |> CalDAVClient.Event.get(@calendar_id, @event_id)
   end
 
   test "fails on invalid credentials" do
-    assert {:error, :unauthorized} = @invalid_client |> CalDAVClient.Event.get(@event_url)
+    assert {:error, :unauthorized} =
+             @invalid_client |> CalDAVClient.Event.get(@calendar_id, @event_id)
   end
 end

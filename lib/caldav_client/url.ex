@@ -19,7 +19,7 @@ defmodule CalDAVClient.URL do
          |> make_tesla_client(@xml_middlewares)
          |> Tesla.request(
            method: :propfind,
-           url: "",
+           url: client.server_url,
            headers: [],
            body: CalDAVClient.XML.Builder.build_get_user_principal_xml()
          ) do
@@ -74,11 +74,11 @@ defmodule CalDAVClient.URL do
   @doc """
   Builds event URL for given user, calendar id and event_id
   """
-  @spec build_event_url(Client.t(), String.t(), String.t()) :: String.t()
+  @spec build_event_url(Client.t(), String.t(), String.t()) :: {:ok, String.t()} | {:error, any()}
   def build_event_url(client, calendar_id, event_id) do
     with {:ok, calendar_url} <- build_calendar_url(client, calendar_id),
          event_id <- URI.encode(event_id) do
-      Path.absname(event_id, calendar_url)
+      {:ok, Path.absname(event_id, calendar_url)}
     end
   end
 end

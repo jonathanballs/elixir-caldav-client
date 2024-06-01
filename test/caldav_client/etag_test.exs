@@ -16,10 +16,8 @@ defmodule CalDAVClient.ETagTest do
   }
 
   @calendar_id "etag_test"
-  @calendar_url CalDAVClient.URL.build_calendar_url(@client, @calendar_id)
 
   @event_id "event.ics"
-  @event_url CalDAVClient.URL.build_event_url(@client, @calendar_id, @event_id)
 
   @event_icalendar """
   BEGIN:VCALENDAR
@@ -48,33 +46,35 @@ defmodule CalDAVClient.ETagTest do
   setup do
     :ok =
       @client
-      |> CalDAVClient.Calendar.create(@calendar_url, name: "Name", description: "Description")
+      |> CalDAVClient.Calendar.create(@calendar_id, name: "Name", description: "Description")
 
-    on_exit(fn -> @client |> CalDAVClient.Calendar.delete(@calendar_url) end)
+    on_exit(fn -> @client |> CalDAVClient.Calendar.delete(@calendar_id) end)
     :ok
   end
 
   test "returns correct etag when event is created" do
-    {:ok, etag} = @client |> CalDAVClient.Event.create(@event_url, @event_icalendar)
-    assert {:ok, _icalendar, ^etag} = @client |> CalDAVClient.Event.get(@event_url)
+    {:ok, etag} = @client |> CalDAVClient.Event.create(@calendar_id, @event_id, @event_icalendar)
+    assert {:ok, _icalendar, ^etag} = @client |> CalDAVClient.Event.get(@calendar_id, @event_id)
   end
 
   describe "when event is updated" do
     setup do
-      {:ok, etag} = @client |> CalDAVClient.Event.create(@event_url, @event_icalendar)
+      {:ok, etag} =
+        @client |> CalDAVClient.Event.create(@calendar_id, @event_id, @event_icalendar)
 
       [etag: etag]
     end
 
     test "passes without etag" do
       assert {:ok, _etag} =
-               @client |> CalDAVClient.Event.update(@event_url, @event_icalendar_modified)
+               @client
+               |> CalDAVClient.Event.update(@calendar_id, @event_id, @event_icalendar_modified)
     end
 
     test "passes with correct etag", context do
       assert {:ok, _etag} =
                @client
-               |> CalDAVClient.Event.update(@event_url, @event_icalendar_modified,
+               |> CalDAVClient.Event.update(@calendar_id, @event_id, @event_icalendar_modified,
                  etag: context[:etag]
                )
     end
@@ -82,35 +82,42 @@ defmodule CalDAVClient.ETagTest do
     test "fails with incorrect etag" do
       assert {:error, :bad_etag} =
                @client
-               |> CalDAVClient.Event.update(@event_url, @event_icalendar_modified, etag: "bad")
+               |> CalDAVClient.Event.update(@calendar_id, @event_id, @event_icalendar_modified,
+                 etag: "bad"
+               )
     end
 
     test "returns correct etag when event is updated", context do
       {:ok, etag} =
         @client
-        |> CalDAVClient.Event.update(@event_url, @event_icalendar_modified, etag: context[:etag])
+        |> CalDAVClient.Event.update(@calendar_id, @event_id, @event_icalendar_modified,
+          etag: context[:etag]
+        )
 
-      assert {:ok, _icalendar, ^etag} = @client |> CalDAVClient.Event.get(@event_url)
+      assert {:ok, _icalendar, ^etag} = @client |> CalDAVClient.Event.get(@calendar_id, @event_id)
     end
   end
 
   describe "when event is deleted" do
     setup do
-      {:ok, etag} = @client |> CalDAVClient.Event.create(@event_url, @event_icalendar)
+      {:ok, etag} =
+        @client |> CalDAVClient.Event.create(@calendar_id, @event_id, @event_icalendar)
 
       [etag: etag]
     end
 
     test "passes without etag" do
-      assert :ok = @client |> CalDAVClient.Event.delete(@event_url)
+      assert :ok = @client |> CalDAVClient.Event.delete(@calendar_id, @event_id)
     end
 
     test "passes with correct etag", context do
-      assert :ok = @client |> CalDAVClient.Event.delete(@event_url, etag: context[:etag])
+      assert :ok =
+               @client |> CalDAVClient.Event.delete(@calendar_id, @event_id, etag: context[:etag])
     end
 
     test "fails with incorrect etag" do
-      assert {:error, :bad_etag} = @client |> CalDAVClient.Event.delete(@event_url, etag: "bad")
+      assert {:error, :bad_etag} =
+               @client |> CalDAVClient.Event.delete(@calendar_id, @event_id, etag: "bad")
     end
   end
 end

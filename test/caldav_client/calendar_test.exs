@@ -1,6 +1,8 @@
 defmodule CalDAVClient.CalendarTest do
   use ExUnit.Case
 
+  alias CalDAVClient.URL
+
   @moduletag :integration
 
   @server_url Application.compile_env(:caldav_client, :test_server)[:server_url]
@@ -16,10 +18,10 @@ defmodule CalDAVClient.CalendarTest do
   }
 
   @calendar_id "calendar_test"
-  @calendar_url CalDAVClient.URL.build_calendar_url(@client, @calendar_id)
 
   setup do
-    on_exit(fn -> @client |> CalDAVClient.Calendar.delete(@calendar_url) end)
+    {:ok, calendar_url} = URL.build_calendar_url(@client, @calendar_id)
+    on_exit(fn -> @client |> CalDAVClient.Calendar.delete(calendar_url) end)
     :ok
   end
 
@@ -27,18 +29,18 @@ defmodule CalDAVClient.CalendarTest do
     test "returns ok on calendar create" do
       assert :ok =
                @client
-               |> CalDAVClient.Calendar.create(@calendar_url,
+               |> CalDAVClient.Calendar.create(@calendar_id,
                  name: "Name",
                  description: "Description"
                )
     end
 
     test "returns error not found on calendar update" do
-      assert {:error, :not_found} = @client |> CalDAVClient.Calendar.update(@calendar_url)
+      assert {:error, :not_found} = @client |> CalDAVClient.Calendar.update(@calendar_id)
     end
 
     test "returns error not found on calendar delete" do
-      assert {:error, :not_found} = @client |> CalDAVClient.Calendar.delete(@calendar_url)
+      assert {:error, :not_found} = @client |> CalDAVClient.Calendar.delete(@calendar_id)
     end
   end
 
@@ -46,7 +48,7 @@ defmodule CalDAVClient.CalendarTest do
     setup do
       :ok =
         @client
-        |> CalDAVClient.Calendar.create(@calendar_url, name: "Name", description: "Description")
+        |> CalDAVClient.Calendar.create(@calendar_id, name: "Name", description: "Description")
 
       :ok
     end
@@ -54,7 +56,7 @@ defmodule CalDAVClient.CalendarTest do
     test "returns error already exists on calendar create" do
       assert {:error, :already_exists} =
                @client
-               |> CalDAVClient.Calendar.create(@calendar_url,
+               |> CalDAVClient.Calendar.create(@calendar_id,
                  name: "Name",
                  description: "Description"
                )
@@ -63,30 +65,31 @@ defmodule CalDAVClient.CalendarTest do
     test "returns ok on calendar update" do
       assert :ok =
                @client
-               |> CalDAVClient.Calendar.update(@calendar_url,
+               |> CalDAVClient.Calendar.update(@calendar_id,
                  name: "Name2",
                  description: "Description2"
                )
     end
 
     test "returns ok on calendar delete" do
-      assert :ok = @client |> CalDAVClient.Calendar.delete(@calendar_url)
+      assert :ok = @client |> CalDAVClient.Calendar.delete(@calendar_id)
     end
   end
 
   describe "lists calendars" do
-    test "creates a calendar" do
-      assert :ok =
-               @client
-               |> CalDAVClient.Calendar.create(@calendar_url,
-                 name: "Name",
-                 description: "Description"
-               )
-    end
-
     test "returns list of calendars" do
-      @client
-      |> CalDAVClient.Calendar.list()
+      {:ok, [calendar]} =
+        @client
+        |> CalDAVClient.Calendar.list()
+
+      assert %CalDAVClient.Calendar{
+               url: "/cal.php/calendars/test@example.com/default/",
+               name: "Default calendar",
+               type: "VEVENTVTODO",
+               timezone: "Europe/London",
+               color: "",
+               description: "Default calendar"
+             } = calendar
     end
   end
 end
