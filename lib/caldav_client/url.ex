@@ -74,11 +74,9 @@ defmodule CalDAVClient.URL do
   @doc """
   Builds event URL for given user, calendar id and event_id
   """
-  @spec build_event_url(Client.t(), String.t(), String.t()) :: {:ok, String.t()} | {:error, any()}
-  def build_event_url(client, calendar_id, event_id) do
-    with {:ok, calendar_url} <- build_calendar_url(client, calendar_id),
-         event_id <- URI.encode(event_id) do
-      {:ok, Path.absname(event_id, calendar_url)}
-    end
+  @spec build_event_url(String.t(), String.t()) :: {:ok, String.t()} | {:error, any()}
+  def build_event_url(calendar_url, event_id) do
+    event_id = URI.encode(event_id)
+    {:ok, Path.absname(event_id, calendar_url)}
   end
 end

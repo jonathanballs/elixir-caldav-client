@@ -10,6 +10,7 @@ defmodule CalDAVClient.MixProject do
       description: description(),
       package: package(),
       deps: deps(),
+      elixirc_paths: elixirc_paths(Mix.env()),
 
       # Docs
       source_url: "https://github.com/software-mansion-labs/elixir-caldav-client",
@@ -57,4 +58,8 @@ defmodule CalDAVClient.MixProject do
       links: %{"GitHub" => "https://github.com/software-mansion-labs/elixir-caldav-client"}
     ]
   end
+
+  # Specifies which paths to compile per environment.
+  defp elixirc_paths(:test), do: ["lib", "test/support"]
+  defp elixirc_paths(_), do: ["lib"]
 end

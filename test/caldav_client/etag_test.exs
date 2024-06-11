@@ -1,19 +1,8 @@
 defmodule CalDAVClient.ETagTest do
   use ExUnit.Case
 
-  @moduletag :integration
-
-  @server_url Application.compile_env(:caldav_client, :test_server)[:server_url]
-  @username Application.compile_env(:caldav_client, :test_server)[:username]
-  @password Application.compile_env(:caldav_client, :test_server)[:password]
-
-  @client %CalDAVClient.Client{
-    server_url: @server_url,
-    auth: %CalDAVClient.Auth.Basic{
-      username: @username,
-      password: @password
-    }
-  }
+  use CalDAVClient.IntegrationTest
+  alias CalDAVClient.URL
 
   @calendar_id "etag_test"
 
@@ -43,81 +32,91 @@ defmodule CalDAVClient.ETagTest do
   END:VCALENDAR
   """
 
-  setup do
-    :ok =
-      @client
-      |> CalDAVClient.Calendar.create(@calendar_id, name: "Name", description: "Description")
+  setup %{client: client} do
+    {:ok, calendar_url} = URL.build_calendar_url(client, @calendar_id)
+    on_exit(fn -> CalDAVClient.Calendar.delete(client, calendar_url) end)
 
-    on_exit(fn -> @client |> CalDAVClient.Calendar.delete(@calendar_id) end)
-    :ok
+    :ok =
+      CalDAVClient.Calendar.create(
+        client,
+        calendar_url,
+        name: "Name",
+        description: "Description"
+      )
+
+    %{calendar_url: calendar_url}
   end
 
-  test "returns correct etag when event is created" do
-    {:ok, etag} = @client |> CalDAVClient.Event.create(@calendar_id, @event_id, @event_icalendar)
-    assert {:ok, _icalendar, ^etag} = @client |> CalDAVClient.Event.get(@calendar_id, @event_id)
+  test "returns correct etag when event is created", %{client: client, calendar_url: calendar_url} do
+    {:ok, etag} = client |> CalDAVClient.Event.create(calendar_url, @event_id, @event_icalendar)
+    assert {:ok, _icalendar, ^etag} = client |> CalDAVClient.Event.get(calendar_url, @event_id)
   end
 
   describe "when event is updated" do
-    setup do
+    setup %{client: client, calendar_url: calendar_url} do
       {:ok, etag} =
-        @client |> CalDAVClient.Event.create(@calendar_id, @event_id, @event_icalendar)
+        client |> CalDAVClient.Event.create(calendar_url, @event_id, @event_icalendar)
 
       [etag: etag]
     end
 
-    test "passes without etag" do
+    test "passes without etag", %{client: client, calendar_url: calendar_url} do
       assert {:ok, _etag} =
-               @client
-               |> CalDAVClient.Event.update(@calendar_id, @event_id, @event_icalendar_modified)
+               client
+               |> CalDAVClient.Event.update(calendar_url, @event_id, @event_icalendar_modified)
     end
 
-    test "passes with correct etag", context do
+    test "passes with correct etag", %{client: client, calendar_url: calendar_url, etag: etag} do
       assert {:ok, _etag} =
-               @client
-               |> CalDAVClient.Event.update(@calendar_id, @event_id, @event_icalendar_modified,
-                 etag: context[:etag]
+               client
+               |> CalDAVClient.Event.update(calendar_url, @event_id, @event_icalendar_modified,
+                 etag: etag
                )
     end
 
-    test "fails with incorrect etag" do
+    test "fails with incorrect etag", %{client: client, calendar_url: calendar_url} do
       assert {:error, :bad_etag} =
-               @client
-               |> CalDAVClient.Event.update(@calendar_id, @event_id, @event_icalendar_modified,
+               client
+               |> CalDAVClient.Event.update(calendar_url, @event_id, @event_icalendar_modified,
                  etag: "bad"
                )
     end
 
-    test "returns correct etag when event is updated", context do
+    test "returns correct etag when event is updated", %{
+      client: client,
+      calendar_url: calendar_url,
+      etag: etag
+    } do
       {:ok, etag} =
-        @client
-        |> CalDAVClient.Event.update(@calendar_id, @event_id, @event_icalendar_modified,
-          etag: context[:etag]
+        client
+        |> CalDAVClient.Event.update(calendar_url, @event_id, @event_icalendar_modified,
+          etag: etag
         )
 
-      assert {:ok, _icalendar, ^etag} = @client |> CalDAVClient.Event.get(@calendar_id, @event_id)
+      assert {:ok, _icalendar, ^etag} = client |> CalDAVClient.Event.get(calendar_url, @event_id)
     end
   end
 
   describe "when event is deleted" do
-    setup do
+    setup %{client: client, calendar_url: calendar_url} do
       {:ok, etag} =
-        @client |> CalDAVClient.Event.create(@calendar_id, @event_id, @event_icalendar)
+        client |> CalDAVClient.Event.create(calendar_url, @event_id, @event_icalendar)
 
       [etag: etag]
     end
 
-    test "passes without etag" do
-      assert :ok = @client |> CalDAVClient.Event.delete(@calendar_id, @event_id)
+    test "passes without etag", %{client: client, calendar_url: calendar_url} do
+      assert :ok = client |> CalDAVClient.Event.delete(calendar_url, @event_id)
     end
 
-    test "passes with correct etag", context do
+    test "passes with correct etag", %{client: client, calendar_url: calendar_url, etag: etag} do
       assert :ok =
-               @client |> CalDAVClient.Event.delete(@calendar_id, @event_id, etag: context[:etag])
+               client |> CalDAVClient.Event.delete(calendar_url, @event_id, etag: etag)
     end
 
-    test "fails with incorrect etag" do
+    test "fails with incorrect etag", %{client: client, calendar_url: calendar_url} do
       assert {:error, :bad_etag} =
-               @client |> CalDAVClient.Event.delete(@calendar_id, @event_id, etag: "bad")
+               client |> CalDAVClient.Event.delete(calendar_url, @event_id, etag: "bad")
     end
   end
 end

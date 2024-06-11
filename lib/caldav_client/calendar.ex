@@ -61,27 +61,30 @@ defmodule CalDAVClient.Calendar do
   * `name` - calendar name.
   * `description` - calendar description.
   """
-  @spec create(CalDAVClient.Client.t(), calendar_url :: String.t(), opts :: keyword()) ::
+  @spec create(CalDAVClient.Client.t(), String.t(), opts :: keyword()) ::
           :ok | {:error, any()}
-  def create(client, calendar_id, opts \\ []) do
-    with {:ok, calendar_url} <- URL.build_calendar_url(client, calendar_id) do
-      case client
-           |> make_tesla_client(@xml_middlewares)
-           |> Tesla.request(
-             method: :mkcalendar,
-             url: calendar_url,
-             body: CalDAVClient.XML.Builder.build_create_calendar_xml(opts)
-           ) do
-        {:ok, %Tesla.Env{status: code}} ->
-          case code do
-            201 -> :ok
-            405 -> {:error, :already_exists}
-            _ -> {:error, reason_atom(code)}
-          end
+  def create(client, calendar_url, opts \\ []) do
+    case client
+         |> make_tesla_client(@xml_middlewares)
+         |> Tesla.request(
+           method: :mkcalendar,
+           url: calendar_url,
+           body: CalDAVClient.XML.Builder.build_create_calendar_xml(opts)
+         ) do
+      {:ok, %Tesla.Env{status: code}} ->
+        case code do
+          201 ->
+            :ok
 
-        {:error, _reason} = error ->
-          error
-      end
+          405 ->
+            {:error, :already_exists}
+
+          _ ->
+            {:error, reason_atom(code)}
+        end
+
+      {:error, _reason} = error ->
+        error
     end
   end
 
@@ -92,47 +95,43 @@ defmodule CalDAVClient.Calendar do
   * `name` - calendar name.
   * `description` - calendar description.
   """
-  @spec update(CalDAVClient.Client.t(), calendar_id :: String.t(), opts :: keyword()) ::
+  @spec update(CalDAVClient.Client.t(), String.t(), opts :: keyword()) ::
           :ok | {:error, any()}
-  def update(client, calendar_id, opts \\ []) do
-    with {:ok, calendar_url} <- URL.build_calendar_url(client, calendar_id) do
-      case client
-           |> make_tesla_client(@xml_middlewares)
-           |> Tesla.request(
-             method: :proppatch,
-             url: calendar_url,
-             body: CalDAVClient.XML.Builder.build_update_calendar_xml(opts)
-           ) do
-        {:ok, %Tesla.Env{status: code}} ->
-          case code do
-            207 -> :ok
-            _ -> {:error, reason_atom(code)}
-          end
+  def update(client, calendar_url, opts \\ []) do
+    case client
+         |> make_tesla_client(@xml_middlewares)
+         |> Tesla.request(
+           method: :proppatch,
+           url: calendar_url,
+           body: CalDAVClient.XML.Builder.build_update_calendar_xml(opts)
+         ) do
+      {:ok, %Tesla.Env{status: code}} ->
+        case code do
+          207 -> :ok
+          _ -> {:error, reason_atom(code)}
+        end
 
-        {:error, _reason} = error ->
-          error
-      end
+      {:error, _reason} = error ->
+        error
     end
   end
 
   @doc """
   Deletes a specific calendar.
   """
-  @spec delete(CalDAVClient.Client.t(), calendar_id :: String.t()) :: :ok | {:error, any()}
-  def delete(client, calendar_id) do
-    with {:ok, calendar_url} <- URL.build_calendar_url(client, calendar_id) do
-      case client
-           |> make_tesla_client()
-           |> Tesla.delete(calendar_url) do
-        {:ok, %Tesla.Env{status: code}} ->
-          case code do
-            204 -> :ok
-            _ -> {:error, reason_atom(code)}
-          end
+  @spec delete(CalDAVClient.Client.t(), String.t()) :: :ok | {:error, any()}
+  def delete(client, calendar_url) do
+    case client
+         |> make_tesla_client()
+         |> Tesla.delete(calendar_url) do
+      {:ok, %Tesla.Env{status: code}} ->
+        case code do
+          204 -> :ok
+          _ -> {:error, reason_atom(code)}
+        end
 
-        {:error, _reason} = error ->
-          error
-      end
+      {:error, _reason} = error ->
+        error
     end
   end
 end

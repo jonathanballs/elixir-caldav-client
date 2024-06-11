@@ -21,16 +21,16 @@ defmodule CalDAVClient.Event do
   """
   @spec create(
           CalDAVClient.Client.t(),
-          calendar_id :: String.t(),
+          calendar_url :: String.t(),
           event_id :: String.t(),
           event_icalendar :: String.t()
         ) ::
           {:ok, etag :: String.t() | nil} | {:error, any()}
-  def create(client, calendar_id, event_id, event_icalendar) do
+  def create(client, calendar_url, event_id, event_icalendar) do
     # fail when event already exists
     headers = [{"If-None-Match", "*"}]
 
-    with {:ok, event_url} <- URL.build_event_url(client, calendar_id, event_id) do
+    with {:ok, event_url} <- URL.build_event_url(calendar_url, event_id) do
       case client
            |> make_tesla_client([
              CalDAVClient.Tesla.ContentTypeICalendarMiddleware,
@@ -61,13 +61,13 @@ defmodule CalDAVClient.Event do
   """
   @spec update(
           CalDAVClient.Client.t(),
-          calendar_id :: String.t(),
+          calendar_url :: String.t(),
           event_id :: String.t(),
           event_icalendar :: String.t(),
           opts :: keyword()
         ) :: {:ok, etag :: String.t() | nil} | {:error, any()}
-  def update(client, calendar_id, event_id, event_icalendar, opts \\ []) do
-    with {:ok, event_url} <- URL.build_event_url(client, calendar_id, event_id) do
+  def update(client, calendar_url, event_id, event_icalendar, opts \\ []) do
+    with {:ok, event_url} <- URL.build_event_url(calendar_url, event_id) do
       case client
            |> make_tesla_client([
              CalDAVClient.Tesla.ContentTypeICalendarMiddleware,
@@ -99,12 +99,12 @@ defmodule CalDAVClient.Event do
   """
   @spec delete(
           CalDAVClient.Client.t(),
-          calendar_id :: String.t(),
+          calendar_url :: String.t(),
           event_id :: String.t(),
           opts :: keyword()
         ) :: :ok | {:error, any()}
-  def delete(client, calendar_id, event_id, opts \\ []) do
-    with {:ok, event_url} <- URL.build_event_url(client, calendar_id, event_id) do
+  def delete(client, calendar_url, event_id, opts \\ []) do
+    with {:ok, event_url} <- URL.build_event_url(calendar_url, event_id) do
       case client
            |> make_tesla_client([
              CalDAVClient.Tesla.ContentTypeICalendarMiddleware,
@@ -130,8 +130,8 @@ defmodule CalDAVClient.Event do
   """
   @spec get(CalDAVClient.Client.t(), String.t(), String.t()) ::
           {:ok, icalendar :: String.t(), etag :: String.t()} | {:error, any()}
-  def get(client, calendar_id, event_id) do
-    with {:ok, event_url} <- URL.build_event_url(client, calendar_id, event_id) do
+  def get(client, calendar_url, event_id) do
+    with {:ok, event_url} <- URL.build_event_url(calendar_url, event_id) do
       case client
            |> make_tesla_client()
            |> Tesla.get(event_url) do
@@ -154,16 +154,14 @@ defmodule CalDAVClient.Event do
   """
   @spec find_by_uid(CalDAVClient.Client.t(), String.t(), String.t()) ::
           {:ok, t()} | {:error, any()}
-  def find_by_uid(client, calendar_id, event_uid) do
-    with {:ok, calendar_url} <- URL.build_calendar_url(client, calendar_id) do
-      request_xml = CalDAVClient.XML.Builder.build_retrieval_of_event_by_uid_xml(event_uid)
+  def find_by_uid(client, calendar_url, event_uid) do
+    request_xml = CalDAVClient.XML.Builder.build_retrieval_of_event_by_uid_xml(event_uid)
 
-      case client |> get_events_by_xml(calendar_url, request_xml) do
-        {:ok, [event]} -> {:ok, event}
-        {:ok, []} -> {:error, :not_found}
-        {:ok, _events} -> {:error, :multiple_found}
-        {:error, _reason} = error -> error
-      end
+    case client |> get_events_by_xml(calendar_url, request_xml) do
+      {:ok, [event]} -> {:ok, event}
+      {:ok, []} -> {:error, :not_found}
+      {:ok, _events} -> {:error, :multiple_found}
+      {:error, _reason} = error -> error
     end
   end
 
@@ -176,16 +174,14 @@ defmodule CalDAVClient.Event do
   """
   @spec get_events(
           CalDAVClient.Client.t(),
-          calendar_id :: String.t(),
+          calendar_url :: String.t(),
           from :: DateTime.t(),
           to :: DateTime.t(),
           opts :: keyword()
         ) :: {:ok, [t()]} | {:error, any()}
-  def get_events(client, calendar_id, from, to, opts \\ []) do
-    with {:ok, calendar_url} <- URL.build_calendar_url(client, calendar_id) do
-      request_xml = CalDAVClient.XML.Builder.build_retrieval_of_events_xml(from, to, opts)
-      client |> get_events_by_xml(calendar_url, request_xml)
-    end
+  def get_events(client, calendar_url, from, to, opts \\ []) do
+    request_xml = CalDAVClient.XML.Builder.build_retrieval_of_events_xml(from, to, opts)
+    client |> get_events_by_xml(calendar_url, request_xml)
   end
 
   @doc """
