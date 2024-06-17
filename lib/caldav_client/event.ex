@@ -3,7 +3,6 @@ defmodule CalDAVClient.Event do
   Allows for managing events on the calendar server.
   """
 
-  import CalDAVClient.HTTP.Error
   import CalDAVClient.Tesla
   alias CalDAVClient.URL
 
@@ -41,13 +40,7 @@ defmodule CalDAVClient.Event do
           etag = env |> Tesla.get_header("etag")
           {:ok, etag}
 
-        {:ok, %Tesla.Env{status: code}} ->
-          case code do
-            412 -> {:error, :already_exists}
-            _ -> {:error, reason_atom(code)}
-          end
-
-        {:error, _reason} = error ->
+        error ->
           error
       end
     end
@@ -79,13 +72,7 @@ defmodule CalDAVClient.Event do
           etag = env |> Tesla.get_header("etag")
           {:ok, etag}
 
-        {:ok, %Tesla.Env{status: code}} ->
-          case code do
-            412 -> {:error, :bad_etag}
-            _ -> {:error, reason_atom(code)}
-          end
-
-        {:error, _reason} = error ->
+        error ->
           error
       end
     end
@@ -112,14 +99,10 @@ defmodule CalDAVClient.Event do
              {CalDAVClient.Tesla.IfMatchMiddleware, etag: opts[:etag]}
            ])
            |> Tesla.delete(event_url) do
-        {:ok, %Tesla.Env{status: code}} ->
-          case code do
-            204 -> :ok
-            412 -> {:error, :bad_etag}
-            _ -> {:error, reason_atom(code)}
-          end
+        {:ok, %Tesla.Env{status: 204}} ->
+          :ok
 
-        {:error, _reason} = error ->
+        error ->
           error
       end
     end
@@ -139,10 +122,7 @@ defmodule CalDAVClient.Event do
           etag = env |> Tesla.get_header("etag")
           {:ok, icalendar, etag}
 
-        {:ok, %Tesla.Env{status: code}} ->
-          {:error, reason_atom(code)}
-
-        {:error, _reason} = error ->
+        error ->
           error
       end
     end
@@ -160,8 +140,7 @@ defmodule CalDAVClient.Event do
     case client |> get_events_by_xml(calendar_url, request_xml) do
       {:ok, [event]} -> {:ok, event}
       {:ok, []} -> {:error, :not_found}
-      {:ok, _events} -> {:error, :multiple_found}
-      {:error, _reason} = error -> error
+      error -> error
     end
   end
 
@@ -214,10 +193,7 @@ defmodule CalDAVClient.Event do
         events = response_xml |> CalDAVClient.XML.Parser.parse_events()
         {:ok, events}
 
-      {:ok, %Tesla.Env{status: code}} ->
-        {:error, reason_atom(code)}
-
-      {:error, _reason} = error ->
+      error ->
         error
     end
   end

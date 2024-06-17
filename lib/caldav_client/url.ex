@@ -4,7 +4,6 @@ defmodule CalDAVClient.URL do
   """
 
   alias CalDAVClient.Client
-  import CalDAVClient.HTTP.Error
   import CalDAVClient.Tesla
 
   @xml_middlewares [
@@ -26,10 +25,7 @@ defmodule CalDAVClient.URL do
       {:ok, %Tesla.Env{status: 207, body: response_xml}} ->
         CalDAVClient.XML.Parser.parse_user_principal(response_xml)
 
-      {:ok, %Tesla.Env{status: code}} ->
-        {:error, reason_atom(code)}
-
-      {:error, _reason} = error ->
+      error ->
         error
     end
   end
@@ -51,10 +47,7 @@ defmodule CalDAVClient.URL do
         {:ok, %Tesla.Env{status: 207, body: response_xml}} ->
           CalDAVClient.XML.Parser.parse_calendar_home_set(response_xml)
 
-        {:ok, %Tesla.Env{status: code}} ->
-          {:error, reason_atom(code)}
-
-        {:error, _reason} = error ->
+        error ->
           error
       end
     end

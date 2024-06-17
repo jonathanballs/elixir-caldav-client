@@ -3,7 +3,6 @@ defmodule CalDAVClient.Calendar do
   Allows for managing calendars on the calendar server.
   """
 
-  import CalDAVClient.HTTP.Error
   import CalDAVClient.Tesla
   alias CalDAVClient.URL
 
@@ -45,10 +44,7 @@ defmodule CalDAVClient.Calendar do
           calendars = response_xml |> CalDAVClient.XML.Parser.parse_calendars()
           {:ok, calendars}
 
-        {:ok, %Tesla.Env{status: code}} ->
-          {:error, reason_atom(code)}
-
-        {:error, _reason} = error ->
+        error ->
           error
       end
     end
@@ -71,19 +67,10 @@ defmodule CalDAVClient.Calendar do
            url: calendar_url,
            body: CalDAVClient.XML.Builder.build_create_calendar_xml(opts)
          ) do
-      {:ok, %Tesla.Env{status: code}} ->
-        case code do
-          201 ->
-            :ok
+      {:ok, %Tesla.Env{status: 201}} ->
+        :ok
 
-          405 ->
-            {:error, :already_exists}
-
-          _ ->
-            {:error, reason_atom(code)}
-        end
-
-      {:error, _reason} = error ->
+      error ->
         error
     end
   end
@@ -105,13 +92,10 @@ defmodule CalDAVClient.Calendar do
            url: calendar_url,
            body: CalDAVClient.XML.Builder.build_update_calendar_xml(opts)
          ) do
-      {:ok, %Tesla.Env{status: code}} ->
-        case code do
-          207 -> :ok
-          _ -> {:error, reason_atom(code)}
-        end
+      {:ok, %Tesla.Env{status: 207}} ->
+        :ok
 
-      {:error, _reason} = error ->
+      error ->
         error
     end
   end
@@ -124,13 +108,10 @@ defmodule CalDAVClient.Calendar do
     case client
          |> make_tesla_client()
          |> Tesla.delete(calendar_url) do
-      {:ok, %Tesla.Env{status: code}} ->
-        case code do
-          204 -> :ok
-          _ -> {:error, reason_atom(code)}
-        end
+      {:ok, %Tesla.Env{status: 204}} ->
+        :ok
 
-      {:error, _reason} = error ->
+      error ->
         error
     end
   end
