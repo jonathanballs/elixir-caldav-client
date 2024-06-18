@@ -63,6 +63,12 @@ defmodule CalDAVClient.Event do
               CalDAVClient.Client.t(),
               calendar_url :: String.t(),
               event_id :: String.t(),
+              event_icalendar :: String.t()
+            ) :: {:ok, etag :: String.t() | nil} | {:error, any()}
+  @callback update(
+              CalDAVClient.Client.t(),
+              calendar_url :: String.t(),
+              event_id :: String.t(),
               event_icalendar :: String.t(),
               opts :: keyword()
             ) :: {:ok, etag :: String.t() | nil} | {:error, any()}
@@ -98,6 +104,11 @@ defmodule CalDAVClient.Event do
   ## Options
   * `etag` - a specific ETag used to ensure that the client overwrites the latest version of the event.
   """
+  @callback delete(
+              CalDAVClient.Client.t(),
+              calendar_url :: String.t(),
+              event_id :: String.t()
+            ) :: :ok | {:error, any()}
   @callback delete(
               CalDAVClient.Client.t(),
               calendar_url :: String.t(),
@@ -175,6 +186,12 @@ defmodule CalDAVClient.Event do
   ## Options
   * `expand` - if `true`, recurring events will be expanded to occurrences, defaults to `false`.
   """
+  @callback get_events(
+              CalDAVClient.Client.t(),
+              calendar_url :: String.t(),
+              from :: DateTime.t(),
+              to :: DateTime.t()
+            ) :: {:ok, [t()]} | {:error, any()}
   @callback get_events(
               CalDAVClient.Client.t(),
               calendar_url :: String.t(),
