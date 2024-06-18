@@ -44,30 +44,32 @@ defmodule CalDAVClient.EventTest do
 
   describe "when calendar does not exist" do
     test "returns error on event create", %{client: client, calendar_url: calendar_url} do
-      assert {:error, :not_found} =
+      assert {:error, %Tesla.Env{status: 404}} =
                client |> CalDAVClient.Event.create(calendar_url, @event_id, @event_icalendar)
     end
 
     test "returns error on event update", %{client: client, calendar_url: calendar_url} do
-      assert {:error, :not_found} =
+      assert {:error, %Tesla.Env{status: 404}} =
                client |> CalDAVClient.Event.update(calendar_url, @event_id, @event_icalendar)
     end
 
     test "returns error on event delete", %{client: client, calendar_url: calendar_url} do
-      assert {:error, :not_found} = client |> CalDAVClient.Event.delete(calendar_url, @event_id)
+      assert {:error, %Tesla.Env{status: 404}} =
+               client |> CalDAVClient.Event.delete(calendar_url, @event_id)
     end
 
     test "returns error on event get", %{client: client, calendar_url: calendar_url} do
-      assert {:error, :not_found} = client |> CalDAVClient.Event.get(calendar_url, @event_id)
+      assert {:error, %Tesla.Env{status: 404}} =
+               client |> CalDAVClient.Event.get(calendar_url, @event_id)
     end
 
     test "returns error on event find by UID", %{client: client, calendar_url: calendar_url} do
-      assert {:error, :not_found} =
+      assert {:error, %Tesla.Env{status: 404}} =
                client |> CalDAVClient.Event.find_by_uid(calendar_url, @event_uid)
     end
 
     test "returns error on get events", %{client: client, calendar_url: calendar_url} do
-      assert {:error, :not_found} =
+      assert {:error, %Tesla.Env{status: 404}} =
                client |> CalDAVClient.Event.get_events(calendar_url, @from, @to)
     end
   end
@@ -90,7 +92,7 @@ defmodule CalDAVClient.EventTest do
       client: client,
       calendar_url: calendar_url
     } do
-      assert {:error, _reason} =
+      assert {:error, %Tesla.Env{status: 415}} =
                client
                |> CalDAVClient.Event.create(
                  calendar_url,
@@ -103,7 +105,7 @@ defmodule CalDAVClient.EventTest do
       client: client,
       calendar_url: calendar_url
     } do
-      assert {:error, :unsupported_media_type} =
+      assert {:error, %Tesla.Env{status: 415}} =
                client
                |> CalDAVClient.Event.create(
                  calendar_url,
@@ -113,16 +115,18 @@ defmodule CalDAVClient.EventTest do
     end
 
     test "returns error not found on event delete", %{client: client, calendar_url: calendar_url} do
-      assert {:error, :not_found} = client |> CalDAVClient.Event.delete(calendar_url, @event_id)
+      assert {:error, %Tesla.Env{status: 404}} =
+               client |> CalDAVClient.Event.delete(calendar_url, @event_id)
     end
 
     test "returns error on event get", %{client: client, calendar_url: calendar_url} do
-      assert {:error, :not_found} = client |> CalDAVClient.Event.get(calendar_url, @event_id)
+      assert {:error, %Tesla.Env{status: 404}} =
+               client |> CalDAVClient.Event.get(calendar_url, @event_id)
     end
 
     test "returns error on event find by UID", %{client: client, calendar_url: calendar_url} do
-      assert {:error, :not_found} =
-               client |> CalDAVClient.Event.find_by_uid(calendar_url, @event_uid)
+      assert {:error, :not_found}
+      client |> CalDAVClient.Event.find_by_uid(calendar_url, @event_uid)
     end
 
     test "returns empty list on get events", %{client: client, calendar_url: calendar_url} do
@@ -146,7 +150,7 @@ defmodule CalDAVClient.EventTest do
       client: client,
       calendar_url: calendar_url
     } do
-      assert {:error, :already_exists} =
+      assert {:error, %Tesla.Env{status: 412}} =
                client |> CalDAVClient.Event.create(calendar_url, @event_id, @event_icalendar)
     end
 
@@ -175,6 +179,13 @@ defmodule CalDAVClient.EventTest do
     } do
       assert {:ok, [%CalDAVClient.Event{icalendar: @event_icalendar}]} =
                client |> CalDAVClient.Event.get_events(calendar_url, @from, @to, expand: false)
+    end
+  end
+
+  describe "invalid client" do
+    test "returns 404 errors", %{invalid_client: client, calendar_url: calendar_url} do
+      assert {:error, %Tesla.Env{status: 404}} =
+               client |> CalDAVClient.Event.create(calendar_url, @event_id, @event_icalendar)
     end
   end
 end

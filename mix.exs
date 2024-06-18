@@ -35,7 +35,7 @@ defmodule CalDAVClient.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:tesla, "~> 1.4"},
+      {:tesla, "~> 1.10"},
       {:xml_builder, "~> 2.2"},
       {:sweet_xml, "~> 0.7.2"},
       {:tzdata, "~> 1.1", optional: true},

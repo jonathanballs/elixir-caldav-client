@@ -26,14 +26,16 @@ defmodule CalDAVClient.CalendarTest do
       client: client,
       calendar_url: calendar_url
     } do
-      assert {:error, :not_found} = CalDAVClient.Calendar.update(client, calendar_url)
+      assert {:error, %Tesla.Env{status: 404}} =
+               CalDAVClient.Calendar.update(client, calendar_url)
     end
 
     test "returns error not found on calendar delete", %{
       client: client,
       calendar_url: calendar_url
     } do
-      assert {:error, :not_found} = client |> CalDAVClient.Calendar.delete(calendar_url)
+      assert {:error, %Tesla.Env{status: 404}} =
+               client |> CalDAVClient.Calendar.delete(calendar_url)
     end
   end
 
@@ -52,7 +54,7 @@ defmodule CalDAVClient.CalendarTest do
       client: client,
       calendar_url: calendar_url
     } do
-      assert {:error, :already_exists} =
+      assert {:error, %Tesla.Env{status: 405}} =
                client
                |> CalDAVClient.Calendar.create(calendar_url,
                  name: "Name",
@@ -86,6 +88,20 @@ defmodule CalDAVClient.CalendarTest do
                color: "",
                description: "Description"
              } = calendar
+    end
+  end
+
+  describe "invalid client" do
+    test "returns 401 errors", %{invalid_client: client, calendar_url: calendar_url} do
+      assert {:error, %Tesla.Env{status: 401}} = CalDAVClient.Calendar.list(client)
+
+      assert {:error, %Tesla.Env{status: 401}} =
+               CalDAVClient.Calendar.create(
+                 client,
+                 calendar_url,
+                 name: "Name",
+                 description: "Description"
+               )
     end
   end
 end

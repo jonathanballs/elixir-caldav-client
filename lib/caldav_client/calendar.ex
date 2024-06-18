@@ -46,6 +46,9 @@ defmodule CalDAVClient.Calendar do
           calendars = response_xml |> CalDAVClient.XML.Parser.parse_calendars()
           {:ok, calendars}
 
+        {:ok, %Tesla.Env{} = env} ->
+          {:error, env}
+
         error ->
           error
       end
@@ -74,6 +77,9 @@ defmodule CalDAVClient.Calendar do
       {:ok, %Tesla.Env{status: 201}} ->
         :ok
 
+      {:ok, %Tesla.Env{} = env} ->
+        {:error, env}
+
       error ->
         error
     end
@@ -101,6 +107,9 @@ defmodule CalDAVClient.Calendar do
       {:ok, %Tesla.Env{status: 207}} ->
         :ok
 
+      {:ok, %Tesla.Env{} = env} ->
+        {:error, env}
+
       error ->
         error
     end
@@ -117,6 +126,9 @@ defmodule CalDAVClient.Calendar do
          |> Tesla.delete(calendar_url) do
       {:ok, %Tesla.Env{status: 204}} ->
         :ok
+
+      {:ok, %Tesla.Env{} = env} ->
+        {:error, env}
 
       error ->
         error

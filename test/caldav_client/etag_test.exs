@@ -75,7 +75,7 @@ defmodule CalDAVClient.ETagTest do
     end
 
     test "fails with incorrect etag", %{client: client, calendar_url: calendar_url} do
-      assert {:error, :bad_etag} =
+      assert {:error, %Tesla.Env{status: 412}} =
                client
                |> CalDAVClient.Event.update(calendar_url, @event_id, @event_icalendar_modified,
                  etag: "bad"
@@ -115,7 +115,7 @@ defmodule CalDAVClient.ETagTest do
     end
 
     test "fails with incorrect etag", %{client: client, calendar_url: calendar_url} do
-      assert {:error, :bad_etag} =
+      assert {:error, %Tesla.Env{status: 412}} =
                client |> CalDAVClient.Event.delete(calendar_url, @event_id, etag: "bad")
     end
   end

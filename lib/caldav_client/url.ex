@@ -25,6 +25,9 @@ defmodule CalDAVClient.URL do
       {:ok, %Tesla.Env{status: 207, body: response_xml}} ->
         CalDAVClient.XML.Parser.parse_user_principal(response_xml)
 
+      {:ok, %Tesla.Env{} = env} ->
+        {:error, env}
+
       error ->
         error
     end
@@ -32,7 +35,8 @@ defmodule CalDAVClient.URL do
 
   @spec get_calendar_home_set(Client.t()) :: {:ok, String.t()} | {:error, :not_found}
   def get_calendar_home_set(%Client{} = client) do
-    with {:ok, user_principal_url} <- get_current_user_principal(client) do
+    with {:ok, user_principal_url} <-
+           get_current_user_principal(client) do
       case client
            |> make_tesla_client(@xml_middlewares)
            |> Tesla.request(

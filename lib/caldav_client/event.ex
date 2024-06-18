@@ -47,6 +47,9 @@ defmodule CalDAVClient.Event do
           etag = env |> Tesla.get_header("etag")
           {:ok, etag}
 
+        {:ok, %Tesla.Env{} = env} ->
+          {:error, env}
+
         error ->
           error
       end
@@ -92,6 +95,9 @@ defmodule CalDAVClient.Event do
           etag = env |> Tesla.get_header("etag")
           {:ok, etag}
 
+        {:ok, %Tesla.Env{} = env} ->
+          {:error, env}
+
         error ->
           error
       end
@@ -133,6 +139,9 @@ defmodule CalDAVClient.Event do
         {:ok, %Tesla.Env{status: 204}} ->
           :ok
 
+        {:ok, %Tesla.Env{} = env} ->
+          {:error, env}
+
         error ->
           error
       end
@@ -154,6 +163,9 @@ defmodule CalDAVClient.Event do
         {:ok, %Tesla.Env{status: 200, body: icalendar} = env} ->
           etag = env |> Tesla.get_header("etag")
           {:ok, icalendar, etag}
+
+        {:ok, %Tesla.Env{} = env} ->
+          {:error, env}
 
         error ->
           error
@@ -246,6 +258,9 @@ defmodule CalDAVClient.Event do
       {:ok, %Tesla.Env{status: 207, body: response_xml}} ->
         events = response_xml |> CalDAVClient.XML.Parser.parse_events()
         {:ok, events}
+
+      {:ok, %Tesla.Env{} = env} ->
+        {:error, env}
 
       error ->
         error

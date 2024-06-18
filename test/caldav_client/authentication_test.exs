@@ -33,7 +33,7 @@ defmodule CalDAVClient.AuthenticationTest do
     invalid_client: invalid_client,
     calendar_url: calendar_url
   } do
-    assert {:error, :unauthorized} =
+    assert {:error, %Tesla.Env{status: 401}} =
              invalid_client |> CalDAVClient.Event.get(calendar_url, @event_id)
   end
 end
