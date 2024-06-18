@@ -18,6 +18,13 @@ defmodule CalDAVClient.Event do
   @doc """
   Creates an event (see [RFC 4791, section 5.3.2](https://tools.ietf.org/html/rfc4791#section-5.3.2)).
   """
+  @callback create(
+              CalDAVClient.Client.t(),
+              calendar_url :: String.t(),
+              event_id :: String.t(),
+              event_icalendar :: String.t()
+            ) ::
+              {:ok, etag :: String.t() | nil} | {:error, any()}
   @spec create(
           CalDAVClient.Client.t(),
           calendar_url :: String.t(),
@@ -52,6 +59,13 @@ defmodule CalDAVClient.Event do
   ## Options
   * `etag` - a specific ETag used to ensure that the client overwrites the latest version of the event.
   """
+  @callback update(
+              CalDAVClient.Client.t(),
+              calendar_url :: String.t(),
+              event_id :: String.t(),
+              event_icalendar :: String.t(),
+              opts :: keyword()
+            ) :: {:ok, etag :: String.t() | nil} | {:error, any()}
   @spec update(
           CalDAVClient.Client.t(),
           calendar_url :: String.t(),
@@ -84,6 +98,12 @@ defmodule CalDAVClient.Event do
   ## Options
   * `etag` - a specific ETag used to ensure that the client overwrites the latest version of the event.
   """
+  @callback delete(
+              CalDAVClient.Client.t(),
+              calendar_url :: String.t(),
+              event_id :: String.t(),
+              opts :: keyword()
+            ) :: :ok | {:error, any()}
   @spec delete(
           CalDAVClient.Client.t(),
           calendar_url :: String.t(),
@@ -111,6 +131,8 @@ defmodule CalDAVClient.Event do
   @doc """
   Returns a specific event in the iCalendar format along with its ETag.
   """
+  @callback get(CalDAVClient.Client.t(), String.t(), String.t()) ::
+              {:ok, icalendar :: String.t(), etag :: String.t()} | {:error, any()}
   @spec get(CalDAVClient.Client.t(), String.t(), String.t()) ::
           {:ok, icalendar :: String.t(), etag :: String.t()} | {:error, any()}
   def get(client, calendar_url, event_id) do
@@ -132,6 +154,8 @@ defmodule CalDAVClient.Event do
   Returns an event with the specified UID property
   (see [RFC 4791, section 7.8.6](https://tools.ietf.org/html/rfc4791#section-7.8.6)).
   """
+  @callback find_by_uid(CalDAVClient.Client.t(), String.t(), String.t()) ::
+              {:ok, t()} | {:error, any()}
   @spec find_by_uid(CalDAVClient.Client.t(), String.t(), String.t()) ::
           {:ok, t()} | {:error, any()}
   def find_by_uid(client, calendar_url, event_uid) do
@@ -151,6 +175,13 @@ defmodule CalDAVClient.Event do
   ## Options
   * `expand` - if `true`, recurring events will be expanded to occurrences, defaults to `false`.
   """
+  @callback get_events(
+              CalDAVClient.Client.t(),
+              calendar_url :: String.t(),
+              from :: DateTime.t(),
+              to :: DateTime.t(),
+              opts :: keyword()
+            ) :: {:ok, [t()]} | {:error, any()}
   @spec get_events(
           CalDAVClient.Client.t(),
           calendar_url :: String.t(),
@@ -170,6 +201,12 @@ defmodule CalDAVClient.Event do
   @doc \"""
   Retrieves all occurrences of events for given XML request body.
   """
+  @callback get_events_by_xml(
+              CalDAVClient.Client.t(),
+              calendar_url :: String.t(),
+              request_xml :: String.t()
+            ) ::
+              {:ok, [t()]} | {:error, any()}
   @spec get_events_by_xml(
           CalDAVClient.Client.t(),
           calendar_url :: String.t(),

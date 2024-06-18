@@ -25,6 +25,8 @@ defmodule CalDAVClient.Calendar do
   @doc """
   Fetches the list of calendars (see [RFC 4791, section 4.2](https://tools.ietf.org/html/rfc4791#section-4.2)).
   """
+  @callback list(CalDAVClient.Client.t()) ::
+              {:ok, [t()]} | {:error, any()}
   @spec list(CalDAVClient.Client.t()) ::
           {:ok, [t()]} | {:error, any()}
   def list(client) do
@@ -57,6 +59,8 @@ defmodule CalDAVClient.Calendar do
   * `name` - calendar name.
   * `description` - calendar description.
   """
+  @callback create(CalDAVClient.Client.t(), String.t(), opts :: keyword()) ::
+              :ok | {:error, any()}
   @spec create(CalDAVClient.Client.t(), String.t(), opts :: keyword()) ::
           :ok | {:error, any()}
   def create(client, calendar_url, opts \\ []) do
@@ -82,6 +86,8 @@ defmodule CalDAVClient.Calendar do
   * `name` - calendar name.
   * `description` - calendar description.
   """
+  @callback update(CalDAVClient.Client.t(), String.t(), opts :: keyword()) ::
+              :ok | {:error, any()}
   @spec update(CalDAVClient.Client.t(), String.t(), opts :: keyword()) ::
           :ok | {:error, any()}
   def update(client, calendar_url, opts \\ []) do
@@ -103,6 +109,7 @@ defmodule CalDAVClient.Calendar do
   @doc """
   Deletes a specific calendar.
   """
+  @callback delete(CalDAVClient.Client.t(), String.t()) :: :ok | {:error, any()}
   @spec delete(CalDAVClient.Client.t(), String.t()) :: :ok | {:error, any()}
   def delete(client, calendar_url) do
     case client
