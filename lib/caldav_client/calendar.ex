@@ -61,27 +61,30 @@ defmodule CalDAVClient.Calendar do
   ## Options
   * `name` - calendar name.
   * `description` - calendar description.
+  * `color` - calendar calendar
   """
   @callback create(CalDAVClient.Client.t(), String.t(), opts :: keyword()) ::
               :ok | {:error, any()}
   @spec create(CalDAVClient.Client.t(), String.t(), opts :: keyword()) ::
           :ok | {:error, any()}
-  def create(client, calendar_url, opts \\ []) do
-    case client
-         |> make_tesla_client(@xml_middlewares)
-         |> Tesla.request(
-           method: :mkcalendar,
-           url: calendar_url,
-           body: CalDAVClient.XML.Builder.build_create_calendar_xml(opts)
-         ) do
-      {:ok, %Tesla.Env{status: 201}} ->
-        :ok
+  def create(client, calendar_id, opts \\ []) do
+    with {:ok, calendar_url} <- URL.build_calendar_url(client, calendar_id) do
+      case client
+           |> make_tesla_client(@xml_middlewares)
+           |> Tesla.request(
+             method: :mkcalendar,
+             url: calendar_url,
+             body: CalDAVClient.XML.Builder.build_create_calendar_xml(opts)
+           ) do
+        {:ok, %Tesla.Env{status: 201}} ->
+          :ok
 
-      {:ok, %Tesla.Env{} = env} ->
-        {:error, env}
+        {:ok, %Tesla.Env{} = env} ->
+          {:error, env}
 
-      error ->
-        error
+        error ->
+          error
+      end
     end
   end
 
