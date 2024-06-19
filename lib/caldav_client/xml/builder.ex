@@ -103,16 +103,16 @@ defmodule CalDAVClient.XML.Builder do
       opts
       |> Enum.map(fn {key, value} ->
         case key do
-          :name -> {"A:displayname", nil, value}
-          :description -> {"A:calendar-description", ["xml:lang": "en"], value}
+          :name -> {"D:displayname", nil, value}
+          :description -> {"C:calendar-description", ["xml:lang": "en"], value}
         end
       end)
 
-    {"A:propertyupdate", ["xmlns:A": "DAV:"],
+    {"D:propertyupdate", ["xmlns:D": "DAV:", "xmlns:C": "urn:ietf:params:xml:ns:caldav"],
      [
-       {"A:set", nil,
+       {"D:set", nil,
         [
-          {"A:prop", nil, props}
+          {"D:prop", nil, props}
         ]}
      ]}
     |> serialize()

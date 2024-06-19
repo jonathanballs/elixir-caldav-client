@@ -39,14 +39,14 @@ defmodule CalDAVClient.XML.BuilderTest do
 
     expected = """
     <?xml version="1.0" encoding="UTF-8"?>
-    <A:propertyupdate xmlns:A="DAV:">
-      <A:set>
-        <A:prop>
-          <A:displayname>Lorem ipsum</A:displayname>
-          <A:calendar-description xml:lang="en">Zażółć gęślą jaźń</A:calendar-description>
-        </A:prop>
-      </A:set>
-    </A:propertyupdate>
+    <D:propertyupdate xmlns:D="DAV:" xmlns:C="urn:ietf:params:xml:ns:caldav">
+      <D:set>
+        <D:prop>
+          <D:displayname>Lorem ipsum</D:displayname>
+          <C:calendar-description xml:lang="en">Zażółć gęślą jaźń</C:calendar-description>
+        </D:prop>
+      </D:set>
+    </D:propertyupdate>
     """
 
     assert_xml_identical(actual, expected)

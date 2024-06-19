@@ -69,6 +69,14 @@ defmodule CalDAVClient.CalendarTest do
                  name: "Name2",
                  description: "Description2"
                )
+
+      assert {:ok,
+              [
+                %CalDAVClient.Calendar{
+                  name: "Name2",
+                  description: "Description2"
+                }
+              ]} = CalDAVClient.Calendar.list(client)
     end
 
     test "returns ok on calendar delete", %{client: client, calendar_url: calendar_url} do

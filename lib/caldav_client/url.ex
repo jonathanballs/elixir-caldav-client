@@ -100,8 +100,6 @@ defmodule CalDAVClient.URL do
 
       {_, _} ->
         base <> "/" <> url
-        #
-        # {_, rest} -> base <> "/" <> rest
     end
   end
 end
