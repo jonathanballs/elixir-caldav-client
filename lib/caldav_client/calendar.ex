@@ -43,7 +43,16 @@ defmodule CalDAVClient.Calendar do
              body: CalDAVClient.XML.Builder.build_list_calendar_xml()
            ) do
         {:ok, %Tesla.Env{status: 207, body: response_xml}} ->
-          calendars = response_xml |> CalDAVClient.XML.Parser.parse_calendars()
+          calendars =
+            response_xml
+            |> CalDAVClient.XML.Parser.parse_calendars()
+            |> Enum.map(fn calendar ->
+              %{
+                calendar
+                | url: URL.merge(calendar_home_set, calendar.url)
+              }
+            end)
+
           {:ok, calendars}
 
         {:ok, %Tesla.Env{} = env} ->
@@ -67,24 +76,22 @@ defmodule CalDAVClient.Calendar do
               :ok | {:error, any()}
   @spec create(CalDAVClient.Client.t(), String.t(), opts :: keyword()) ::
           :ok | {:error, any()}
-  def create(client, calendar_id, opts \\ []) do
-    with {:ok, calendar_url} <- URL.build_calendar_url(client, calendar_id) do
-      case client
-           |> make_tesla_client(@xml_middlewares)
-           |> Tesla.request(
-             method: :mkcalendar,
-             url: calendar_url,
-             body: CalDAVClient.XML.Builder.build_create_calendar_xml(opts)
-           ) do
-        {:ok, %Tesla.Env{status: 201}} ->
-          :ok
+  def create(client, calendar_url, opts \\ []) do
+    case client
+         |> make_tesla_client(@xml_middlewares)
+         |> Tesla.request(
+           method: :mkcalendar,
+           url: calendar_url,
+           body: CalDAVClient.XML.Builder.build_create_calendar_xml(opts)
+         ) do
+      {:ok, %Tesla.Env{status: 201}} ->
+        :ok
 
-        {:ok, %Tesla.Env{} = env} ->
-          {:error, env}
+      {:ok, %Tesla.Env{} = env} ->
+        {:error, env}
 
-        error ->
-          error
-      end
+      error ->
+        error
     end
   end
 

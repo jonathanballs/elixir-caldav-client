@@ -13,10 +13,10 @@ defmodule CalDAVClient.CalendarTest do
   end
 
   describe "when calendar does not exist" do
-    test "returns ok on calendar create", %{client: client} do
+    test "returns ok on calendar create", %{client: client, calendar_url: calendar_url} do
       assert :ok =
                client
-               |> CalDAVClient.Calendar.create(@calendar_id,
+               |> CalDAVClient.Calendar.create(calendar_url,
                  name: "Name",
                  description: "Description"
                )
@@ -40,22 +40,23 @@ defmodule CalDAVClient.CalendarTest do
   end
 
   describe "when calendar exists" do
-    setup %{client: client} do
+    setup %{client: client, calendar_url: calendar_url} do
       :ok =
         CalDAVClient.Calendar.create(
           client,
-          @calendar_id,
+          calendar_url,
           name: "Name",
           description: "Description"
         )
     end
 
     test "returns error already exists on calendar create", %{
-      client: client
+      client: client,
+      calendar_url: calendar_url
     } do
       assert {:error, %Tesla.Env{status: 405}} =
                client
-               |> CalDAVClient.Calendar.create(@calendar_id,
+               |> CalDAVClient.Calendar.create(calendar_url,
                  name: "Name",
                  description: "Description"
                )
@@ -91,13 +92,13 @@ defmodule CalDAVClient.CalendarTest do
   end
 
   describe "invalid client" do
-    test "returns 401 errors", %{invalid_client: client} do
+    test "returns 401 errors", %{invalid_client: client, calendar_url: calendar_url} do
       assert {:error, %Tesla.Env{status: 401}} = CalDAVClient.Calendar.list(client)
 
       assert {:error, %Tesla.Env{status: 401}} =
                CalDAVClient.Calendar.create(
                  client,
-                 @calendar_id,
+                 calendar_url,
                  name: "Name",
                  description: "Description"
                )

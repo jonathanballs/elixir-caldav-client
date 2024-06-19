@@ -64,7 +64,7 @@ defmodule CalDAVClient.URL do
   def build_calendar_url(client, calendar_token_id) do
     with {:ok, calendar_home_set} <- get_calendar_home_set(client),
          calendar_token_id <- URI.encode(calendar_token_id) do
-      {:ok, Path.absname(calendar_token_id, calendar_home_set) <> "/"}
+      {:ok, merge(calendar_home_set, calendar_token_id) <> "/"}
     end
   end
 
@@ -75,5 +75,31 @@ defmodule CalDAVClient.URL do
   def build_event_url(calendar_url, event_id) do
     event_id = URI.encode(event_id)
     {:ok, Path.absname(event_id, calendar_url)}
+  end
+
+  def merge(base, relative) do
+    base_uri =
+      URI.parse(base)
+
+    %{base_uri | path: join(base_uri.path, relative)}
+    |> to_string()
+  end
+
+  defp join(base, url) do
+    case {String.last(to_string(base)), url} do
+      {nil, url} ->
+        join("/", url)
+
+      {_, "/" <> rest} ->
+        "/" <> rest
+
+      {"/", rest} ->
+        base <> rest
+
+      {_, _} ->
+        base <> "/" <> url
+        #
+        # {_, rest} -> base <> "/" <> rest
+    end
   end
 end
