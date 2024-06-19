@@ -60,6 +60,7 @@ defmodule CalDAVClient.URL do
   @doc """
   Builds calendar URL for a given user with calendar ID.
   """
+  @callback build_calendar_url(Client.t(), String.t()) :: {:ok, String.t()} | {:error, any()}
   @spec build_calendar_url(Client.t(), String.t()) :: {:ok, String.t()} | {:error, any()}
   def build_calendar_url(client, calendar_token_id) do
     with {:ok, calendar_home_set} <- get_calendar_home_set(client),
@@ -71,6 +72,7 @@ defmodule CalDAVClient.URL do
   @doc """
   Builds event URL for given user, calendar id and event_id
   """
+  @callback build_event_url(String.t(), String.t()) :: {:ok, String.t()} | {:error, any()}
   @spec build_event_url(String.t(), String.t()) :: {:ok, String.t()} | {:error, any()}
   def build_event_url(calendar_url, event_id) do
     event_id = URI.encode(event_id)
