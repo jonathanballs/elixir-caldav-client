@@ -75,8 +75,7 @@ defmodule CalDAVClient.URL do
   @callback build_event_url(String.t(), String.t()) :: {:ok, String.t()} | {:error, any()}
   @spec build_event_url(String.t(), String.t()) :: {:ok, String.t()} | {:error, any()}
   def build_event_url(calendar_url, event_id) do
-    event_id = URI.encode(event_id)
-    {:ok, Path.absname(event_id, calendar_url)}
+    {:ok, join(calendar_url, URI.encode(event_id))}
   end
 
   def merge(base, relative) do
